@@ -1,18 +1,18 @@
 
 class Cell {
-    #values;
-    #current = 0;
+    values;
+    clicks = 0;
 
     constructor(vals) {
-        this.#values = vals;
+        this.values = vals;
     }
 
     get current() {
-        return this.#values[this.#current];
+        return this.values[this.clicks];
     }
 
     step() {
-        this.#current += 1;
+        this.clicks += 1;
     }
 }
 
@@ -31,11 +31,4 @@ class Board {
         }
     }
     
-    at(r, c) {
-        return this.cells[[r, c]].current;
-    }
-
-    step(r, c) {
-        this.cells[[r, c]].step();
-    }
 }
