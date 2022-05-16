@@ -3,10 +3,13 @@
 
 <head>
     <title>My experiment</title>
+    <script src="js/config.js"></script>
+    <script src="js/board.js"></script>
     <script src="js/jspsych.js"></script>
     <script src="js/plugin-html-keyboard-response.js"></script>
     <script src="js/plugin-image-keyboard-response.js"></script>
     <script src="js/plugin-preload.js"></script>
+    <script src="js/plugin-multiclick-grid.js"></script>
     <link href="css/jspsych.css" rel="stylesheet" type="text/css" />
 </head>
 
@@ -37,6 +40,17 @@
         stimulus: "Welcome to the experiment. Press any key to begin."
     };
     timeline.push(welcome);
+
+    console.log(state);
+    var grid = new Board(state);
+    console.log("grid", grid); 
+    console.log("at ", grid.at(1,1))
+    var mcg = {
+        type: jsMulticlickGrid,
+        clicks: 5,
+        grid_state: grid
+    };
+    timeline.push(mcg);
 
     /* define instructions trial */
     var instructions = {
