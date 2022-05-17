@@ -9,8 +9,7 @@ var jsMulticlickGrid = (function (jspsych) {
         default: undefined,
       },
       grid_state: {
-        type: jspsych.ParameterType.OBJECT,
-        array: true,
+        type: jspsych.ParameterType.FUNCTION,
         default: undefined,
       },
     },
@@ -28,31 +27,85 @@ var jsMulticlickGrid = (function (jspsych) {
       this.jsPsych = jsPsych;
     }
     trial(display_element, trial) {
-      console.log("tgs", trial.grid_state)
-      const endTrial = () => {
-        display_element.innerHTML = "";
-        console.log("tgs", trial.grid_state)
-        this.jsPsych.finishTrial();
+      var totalClicks = 0;
+      var totalScore = 0;
+      var clickSeq = new Array();
+      var handlers = new Map();
+
+      const updateStatus = (newScore, newClicks) => {
+        display_element.querySelector("#multiclick-grid-status-score-value").innerHTML = newScore;
+        display_element.querySelector("#multiclick-grid-status-clicks-value").innerHTML = newClicks;
       }
 
-      var totalClicks = 0;
+      const disableClicks = () => {
+        for (var row = 0; row < trial.grid_state.rows; row++) {
+          for (var col = 0; col < trial.grid_state.columns; col++) {
+            let cellId = MultiClickGridPlugin.generateCellId(row, col);
+            var tableCell = display_element.querySelector(`#${cellId}`);
+            tableCell.removeEventListener("click", handlers[cellId]);
+          }
+        }
+      }
 
-      display_element.innerHTML = MultiClickGridPlugin.generateGrid(trial.grid_state);
+      const enableClick = (r, c) => {
+        let cellId = MultiClickGridPlugin.generateCellId(r, c);
+        handlers[cellId] = (_e) => {
+          var cell = trial.grid_state.cells[[r, c]];
+          totalScore += cell.values[cell.clicks];
+          clickSeq.push(cell.position);
+          cell.clicks++;
+          totalClicks++;
+          updateStatus(totalScore, trial.clicks - totalClicks);
+          if (totalClicks >= trial.clicks) {
+            disableClicks();
+            displaySummary();
+          }
+          tableCell.innerHTML = MultiClickGridPlugin.generateCell(trial.grid_state, r, c);
+        };
+        var tableCell = display_element.querySelector(`#${cellId}`);
+        tableCell.innerHTML = MultiClickGridPlugin.generateCell(trial.grid_state, r, c);
+        tableCell.addEventListener("click", handlers[cellId]);
+      }
+
+      const displaySummary = () => {
+        display_element.innerHTML = "<div id='multiclick-grid-status'>" +
+        "<div id='multiclick-grid-status-score'>" +
+        "<label for='multiclick-grid-status-score-value'>Total score</label>" +
+        "<p id='multiclick-grid-status-score-value'>" + totalScore +
+        "</p></div></div>" +
+        "<div>Press space to continue</div>";
+        this.jsPsych.pluginAPI.getKeyboardResponse({
+          callback_function: endTrial,
+          valid_responses: [' '],
+          persist: false
+        });
+      }
+
+      const endTrial = (_) => {
+        display_element.innerHTML = "";
+        let data = {
+          grid: trial.grid_state.cells,
+          score: totalScore,
+          click_seq: clickSeq,
+        }
+        this.jsPsych.finishTrial(data);
+      }
+
+      display_element.innerHTML = "<div id='multiclick-grid-status'>" +
+        "<div id='multiclick-grid-status-score'>" +
+        "<label for='multiclick-grid-status-score-value'>Score</label>" +
+        "<p id='multiclick-grid-status-score-value'></p>" +
+        "</div>" +
+        "<div id='multiclick-grid-status-clicks'>" +
+        "<label for='multiclick-grid-clicks-value'>Clicks remaining</label>" +
+        "<p id='multiclick-grid-status-clicks-value'></p>" +
+        "</div></div>";
+      display_element.innerHTML += MultiClickGridPlugin.generateGrid(trial.grid_state);
+
+      updateStatus(totalScore, trial.clicks - totalClicks);
       for (var row = 0; row < trial.grid_state.rows; row++) {
         for (var col = 0; col < trial.grid_state.columns; col++) {
-          (function(r, c) {
-            let cellId = MultiClickGridPlugin.generateCellId(r, c);
-            var cell = display_element.querySelector(`#${cellId}`);
-            cell.innerHTML = MultiClickGridPlugin.generateCell(trial.grid_state, r, c);
-            cell.addEventListener("click", (_e) => {
-              trial.grid_state.cells[[r, c]].clicks++;
-              totalClicks++;
-              if (totalClicks >= trial.clicks) {
-                endTrial();
-              }
-              cell.innerHTML = MultiClickGridPlugin.generateCell(trial.grid_state, r, c);
-            })
-          })(row, col);
+          enableClick(row, col);
         }
       }
     }
@@ -72,7 +125,7 @@ var jsMulticlickGrid = (function (jspsych) {
       var html = '<div id="multiclick-grid" css="display: none;">';
 
       html +=
-        '<table id="multiclick-grid-table" ' +
+        '<table id="multiclick-grid-table" class="grid"' +
         'style="border-collapse: collapse; margin-left: auto; margin-right: auto;">';
 
       for (var row = 0; row < grid_state.rows; row++) {

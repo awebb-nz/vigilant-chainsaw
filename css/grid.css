@@ -1,0 +1,17 @@
+.grid td {
+    width: 35px;
+    height: 35px;
+    border: 2px solid lightgrey;
+    font-size: 20px;
+    color: black;
+    vertical-align: center;
+    text-align: center;
+    background-color: white;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none;
+  }
+  .grid td:hover {
+    cursor: pointer;
+  }
