@@ -9,13 +9,10 @@ class Cell {
         this.values = vals;
     }
 
-    get current() {
+    current = () => {
         return this.values[this.clicks];
     }
 
-    step() {
-        this.clicks += 1;
-    }
 }
 
 class Board {
@@ -23,6 +20,7 @@ class Board {
     constructor(state) {
         this.rows = state.rows;
         this.columns = state.columns;
+        this.clicks = 0;
         this.cells = new Map();
         for (var row = 0; row < this.rows; row++){
             for (var col = 0; col < this.columns; col++){
@@ -33,7 +31,11 @@ class Board {
         }
     }
     
-    current(row, col) {
-        return this.cells[[row, col]].current
+    current = (row, col) => {
+        return this.cells[[row, col]].current();
+    }
+
+    position = (row, col) => {
+        return this.cells[[row, col]].position;
     }
 }

@@ -27,7 +27,6 @@ var jsMulticlickGrid = (function (jspsych) {
       this.jsPsych = jsPsych;
     }
     trial(display_element, trial) {
-      var totalClicks = 0;
       var totalScore = 0;
       var clickSeq = new Array();
       var handlers = new Map();
@@ -54,9 +53,9 @@ var jsMulticlickGrid = (function (jspsych) {
           totalScore += cell.values[cell.clicks];
           clickSeq.push(cell.position);
           cell.clicks++;
-          totalClicks++;
-          updateStatus(totalScore, trial.clicks - totalClicks);
-          if (totalClicks >= trial.clicks) {
+          trial.grid_state.clicks++;
+          updateStatus(totalScore, trial.clicks - trial.grid_state.clicks);
+          if (trial.grid_state.clicks >= trial.clicks) {
             disableClicks();
             displaySummary();
           }
@@ -102,7 +101,7 @@ var jsMulticlickGrid = (function (jspsych) {
         "</div></div>";
       display_element.innerHTML += MultiClickGridPlugin.generateGrid(trial.grid_state);
 
-      updateStatus(totalScore, trial.clicks - totalClicks);
+      updateStatus(totalScore, trial.clicks - trial.grid_state.clicks);
       for (var row = 0; row < trial.grid_state.rows; row++) {
         for (var col = 0; col < trial.grid_state.columns; col++) {
           enableClick(row, col);
@@ -115,9 +114,7 @@ var jsMulticlickGrid = (function (jspsych) {
     }
 
     static generateCell(grid_state, row, col) {
-      let cell = grid_state.cells[[row, col]];
-      let value = cell.values[cell.clicks];
-      let html = "<div>" + value + "</div>";
+      let html = "<div>" + grid_state.current(row, col) + "</div>";
       return html
     }
 
